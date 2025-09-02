@@ -7,6 +7,7 @@ from config import CONFIG
 # constants
 __version__ = json.load(open("version.json", "rb"))["__version__"] # major.minor.patch.commits
 CLIENT_UPTIME = time()
+SERVER_URL = "https://ubot-45ce.onrender.com"
 
 # initializing config
 logger = setup_logging() # need to execute after creating Required folderss
