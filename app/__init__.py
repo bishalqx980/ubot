@@ -12,7 +12,7 @@ CLIENT_UPTIME = time()
 logger = setup_logging() # need to execute after creating Required folderss
 config = CONFIG()
 
-app = Client(
+ubot = Client(
     name="account",
     api_id=config.api_id,
     api_hash=config.api_hash,

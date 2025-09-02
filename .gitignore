@@ -4,6 +4,7 @@ venv
 *.json
 *.session*
 config.py
+downloads
 
 # Exception
 !requirements.txt
