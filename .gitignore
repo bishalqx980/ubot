@@ -1,0 +1,11 @@
+__pycache__
+venv
+*.txt
+*.json
+*.session*
+config.py
+
+# Exception
+!requirements.txt
+!.vscode/*
+!version.json
