@@ -1,0 +1,6 @@
+{
+    "modules": [
+        ".handlers.unzip",
+        ".handlers.set_chat_photo"
+    ]
+}

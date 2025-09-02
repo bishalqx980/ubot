@@ -10,3 +10,4 @@ downloads
 !requirements.txt
 !.vscode/*
 !version.json
+!commands.json
