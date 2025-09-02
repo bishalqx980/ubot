@@ -17,6 +17,9 @@ ubot = Client(
     name="account",
     api_id=config.api_id,
     api_hash=config.api_hash,
+    app_version=f"Pyrogram {__pyroversion__}",
+    device_model="MSI b650m-p pro",
+    system_version="Windows 11",
     session_string=config.session_string
 )
 
