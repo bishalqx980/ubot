@@ -31,7 +31,11 @@ async def func_unzip(_: Client, message: Message):
     
     await message.edit_text("Please wait...")
     await message.pin(both_sides=True)
-    zipFile = await re_msg.download(re_msg.document.file_name, progress=progress, progress_args=[message])
+
+    zipFile = await re_msg.download(re_msg.document.file_name, block=False, progress=progress, progress_args=[message])
+    if not zipFile:
+        await message.edit_text("Unable to download!")
+        return
 
     # Unzipping
     await message.edit_text("Unziping...")

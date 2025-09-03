@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from app import ubot
 
-@ubot.on_message(filters.command("setchatphoto", "-") & filters.admin & filters.me)
+@ubot.on_message(filters.command("setchatphoto", "-") & filters.me)
 async def func_set_chat_photo(_: Client, message: Message):
     re_msg = message.reply_to_message
 
@@ -23,6 +23,11 @@ async def func_set_chat_photo(_: Client, message: Message):
         doc = True
     else:
         image = re_msg.photo
-
-    await message.chat.set_photo(photo=image if doc else image.file_id)
+    
+    try:
+        await message.chat.set_photo(photo=image if doc else image.file_id)
+    except Exception as e:
+        await message.edit_text(f"Error: {e}")
+        return
+    
     await message.edit_text("Chat Photo Updated!")

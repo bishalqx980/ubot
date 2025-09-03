@@ -1,6 +1,10 @@
 {
+    "_comment": "maintain a serial of file in dir",
     "modules": [
-        ".handlers.unzip",
-        ".handlers.set_chat_photo"
+        ".handlers.core.start",
+        ".handlers.delete_messages",
+        ".handlers.invite",
+        ".handlers.set_chat_photo",
+        ".handlers.unzip"
     ]
 }
