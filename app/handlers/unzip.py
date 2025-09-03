@@ -6,11 +6,15 @@ from pyrogram.types import Message
 from app import ubot, logger
 from app.modules.utils import Utils
 
-async def progress(current, total, message):
+async def progress(current, total, message, uploading=False):
+    """
+    :param message: Message class
+    :param uploading: `bool` > if `true` then message will be `Uploading` else `Downloading`
+    """
     try:
         percent = float(current * 100 / total)
         await message.edit_text(
-            f"Downloading... `{percent:.2f}%`\n"
+            f"{'Uploading' if uploading else 'Downloading'}... `{percent:.2f}%`\n"
             f"**Progress:** `{Utils.createProgressBar(int(percent))}`"
         )
     except Exception as e:
@@ -66,7 +70,7 @@ async def func_unzip(_: Client, message: Message):
                 f"**File:** `{i}`\n"
                 f"**Percent:** `{percentBar}`"
             ))
-            await message.reply_document(i)
+            await message.reply_document(i, progress=progress, progress_args=[message, True])
             uploaded += 1
         except Exception as e:
             uploadfailed += f"- {e}: `{i}`\n"
