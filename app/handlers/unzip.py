@@ -70,7 +70,15 @@ async def func_unzip(_: Client, message: Message):
                 f"**File:** `{i}`\n"
                 f"**Percent:** `{percentBar}`"
             ))
-            await message.reply_document(i, progress=progress, progress_args=[message, True])
+
+            try:
+                await message.reply_photo(i, progress=progress, progress_args=[message, True])
+            except:
+                try:
+                    await message.reply_video(i, progress=progress, progress_args=[message, True])
+                except:
+                    await message.reply_document(i, progress=progress, progress_args=[message, True])
+            
             uploaded += 1
         except Exception as e:
             uploadfailed += f"- {e}: `{i}`\n"
