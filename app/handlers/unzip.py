@@ -1,4 +1,6 @@
 import os
+from time import time
+from datetime import timedelta
 from asyncio import sleep
 
 from pyrogram import Client, filters
@@ -6,17 +8,40 @@ from pyrogram.types import Message
 from app import ubot, logger
 from app.modules.utils import Utils
 
-async def progress(current, total, message, uploading=False):
+ACTIVE_DOWNLOADS = []
+
+async def progress(current, total, message: Message, message_text="", startTime=None):
     """
+    :param current: Bytes transferred so far
+    :param total: Total bytes
     :param message: Message class
-    :param uploading: `bool` > if `true` then message will be `Uploading` else `Downloading`
+    :param message_text: info text (e.g. "Downloading" or "Uploading")
+    :param startTime: Progress start timestamp (time.time())
     """
     try:
-        percent = float(current * 100 / total)
-        await message.edit_text(
-            f"{'Uploading' if uploading else 'Downloading'}... `{percent:.2f}%`\n"
-            f"**Progress:** `{Utils.createProgressBar(int(percent))}`"
+        if startTime is None:
+            startTime = time()
+        
+        percent = current * 100 / total
+        elapsedTime = time() - startTime
+        elapsed = timedelta(seconds=int(elapsedTime))
+
+        # Speed in MB/s (bytes -> MB)
+        currentSpeed = current / elapsedTime / (1024 * 1024)
+
+        # Remaining time
+        remainingSeconds = (total - current) / (currentSpeed * 1024 * 1024)
+        remaining = timedelta(seconds=int(remainingSeconds))
+
+        text = (
+            f"**{message_text}**\n"
+            f"**Speed:** `{currentSpeed:.2f}MB/s`\n"
+            f"**Elapsed:** `{elapsed}`\n"
+            f"**ETA:** `{remaining}`\n"
+            f"**Progress:** `{Utils.createProgressBar(int(percent))}` `{percent:.2f}%`"
         )
+
+        await message.edit_text(text)
     except Exception as e:
         logger.error(e)
 
@@ -33,10 +58,20 @@ async def func_unzip(_: Client, message: Message):
         await message.edit_text("Replied file isn't a `.zip` file!")
         return
     
+    if ACTIVE_DOWNLOADS:
+        await message.edit_text(
+            f"<a href='{''.join(ACTIVE_DOWNLOADS)}'>This</a> is being downloading...!\n"
+            f"`-clear` to clear download if anything is wrong!"
+        )
+        return
+    
     await message.edit_text("Please wait...")
     await message.pin(both_sides=True)
 
-    zipFile = await re_msg.download(re_msg.document.file_name, progress=progress, progress_args=[message])
+    startTime = time()
+    ACTIVE_DOWNLOADS.append(re_msg.link)
+
+    zipFile = await re_msg.download(re_msg.document.file_name, progress=progress, progress_args=[message, "Downloading...", startTime])
     if not zipFile:
         await message.edit_text("Unable to download!")
         return
@@ -60,24 +95,25 @@ async def func_unzip(_: Client, message: Message):
     counter = 0
     uploaded = 0
     uploadfailed = ""
+    startTime = time()
     for i in response:
         counter += 1
         try:
             percent = counter * 100/len(response)
-            percentBar = Utils.createProgressBar(percent)
-            await message.edit_text((
-                f"Uploading... `{percent:.2f}%`\n"
+            
+            text = (
+                f"Uploading...\n"
                 f"**File:** `{i}`\n"
-                f"**Percent:** `{percentBar}`"
-            ))
+                f"**Total Percent:** `{Utils.createProgressBar(int(percent))}` `{percent:.2f}%`"
+            )
 
             try:
-                await message.reply_photo(i, progress=progress, progress_args=[message, True])
+                await message.reply_photo(i, progress=progress, progress_args=[message, text, startTime])
             except:
                 try:
-                    await message.reply_video(i, progress=progress, progress_args=[message, True])
+                    await message.reply_video(i, width=1280, height=720, progress=progress, progress_args=[message, text, startTime])
                 except:
-                    await message.reply_document(i, progress=progress, progress_args=[message, True])
+                    await message.reply_document(i, progress=progress, progress_args=[message, text, startTime])
             
             uploaded += 1
         except Exception as e:
@@ -91,3 +127,9 @@ async def func_unzip(_: Client, message: Message):
             logger.error(e)
     
     await message.edit_text(f"Upload Completed! ({uploaded}/{len(response)})\n{uploadfailed}")
+
+
+@ubot.on_message(filters.command("clear", "-") & filters.me)
+async def func_clear_active_downloads(_: Client, message: Message):
+    ACTIVE_DOWNLOADS.clear()
+    await message.edit_text("Active download list has been cleared!")
