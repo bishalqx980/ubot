@@ -1,25 +1,47 @@
-import json
-import importlib
+import os
+import asyncio
 
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram import idle
 
-from . import ubot, COMMANDS_FILE_PATH
+from . import ubot, logger
 from .utils.alive import alive
 
 def load_handlers():
-    with open(COMMANDS_FILE_PATH, "r") as f:
-        config = json.load(f)
-    
-    for module_path in config["modules"]:
-        importlib.import_module(module_path, __package__)
+    handlers_dir = "app/handlers"
+    for root, dirs, files in os.walk(handlers_dir):
+        for filename in files:
+            if filename.endswith(".py") and not filename.startswith("_"):
+                rel_path = os.path.relpath(root, handlers_dir)
+                if rel_path == ".":
+                    module_path = f"app.handlers.{filename[:-3]}"
+                else:
+                    rel_module_path = rel_path.replace(os.sep, ".")
+                    module_path = f"app.handlers.{rel_module_path}.{filename[:-3]}"
+                __import__(module_path)
 
-@ubot.on_message(filters.command("ping", "-") & filters.me)
-async def main(client: Client, message: Message):
-    await message.edit_text("IM ALIVE")
+
+async def bot_init():
+    try:
+        await ubot.send_message("me", "Client Started!")
+    except Exception as e:
+        logger.error(e)
+    
+    logger.info("CLIENT STARTED...!")
+    await idle()
+
+
+async def main():
+    # Need to load before bot.run()
+    load_handlers()
+    alive()
+
+    try:
+        await ubot.start()
+        await bot_init()
+    except Exception as e:
+        logger.error(e)
 
 
 if __name__ == "__main__":
-    load_handlers()
-    alive()
-    ubot.run()  # Automatically start() and idle()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

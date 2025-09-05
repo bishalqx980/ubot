@@ -7,7 +7,6 @@ from config import CONFIG
 # constants
 __version__ = json.load(open("version.json", "rb"))["__version__"] # major.minor.patch.commits
 CLIENT_UPTIME = time()
-COMMANDS_FILE_PATH = "app/handlers/commands.json"
 
 # initializing config
 logger = setup_logging() # need to execute after creating Required folderss
